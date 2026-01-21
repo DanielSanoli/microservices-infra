@@ -1,0 +1,101 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: porygonz-postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-danielsanoli}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    container_name: porygonz-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  gym-leader:
+    build:
+      context: ../microservices-gym-leader
+      dockerfile: Dockerfile
+    container_name: gym-leader
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-danielsanoli}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_CACHE_TYPE: redis
+
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  typematch:
+    build:
+      context: ../microservices-typematch
+      dockerfile: Dockerfile
+    container_name: typematch
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      POKEDEX_BASE_URL: http://gym-leader:8081/api/v1/pokemon
+
+    ports:
+      - "8082:8082"
+    depends_on:
+      gym-leader:
+        condition: service_started
+
+  gateway:
+    build:
+      context: ../porygonz-gateway
+      dockerfile: Dockerfile
+    container_name: porygonz-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      GYMLEADER_URI: http://gym-leader:8081
+      TYPEMATCH_URI: http://typematch:8082
+      FUSION_URI: http://fusion-ia-api:8000
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+    ports:
+      - "8080:8080"
+    depends_on:
+      gym-leader:
+        condition: service_started
+      typematch:
+        condition: service_started
+
+  fusion-ia-api:
+    build:
+      context: ../fusion-ia-api
+      dockerfile: Dockerfile
+    container_name: fusion-ia-api
+    environment:
+      ENV: docker
+      RATE_LIMIT_PER_HOUR: 100
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
