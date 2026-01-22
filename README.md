@@ -19,7 +19,7 @@ Clone os repositórios no mesmo diretório pai:
 ```
 
 ## Como rodar
-No Windows PowerShell (com Docker Desktop rodando):
+No Windows PowerShell(com Docker Desktop rodando) ou no Ubuntu, qualquer CMD:
 
 ```bash
 cd microservices-infra
