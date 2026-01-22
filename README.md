@@ -57,28 +57,28 @@ flowchart LR
   classDef data fill:#7c3aed,stroke:#6d28d9,color:#f5f3ff
 
   %% ========= NODES =========
-  client[Client<br/>Browser / Postman]:::client
+  client["Client\nBrowser / Postman"]:::client
 
-  gw[Gateway (porygonz-gateway)<br/>localhost:8080]:::gateway
+  gw["Gateway\nporygonz-gateway\nlocalhost:8080"]:::gateway
 
-  gym[Gym Leader (gym-leader)<br/>localhost:8081]:::service
-  type[TypeMatch (typematch)<br/>localhost:8082]:::service
-  fusion[Fusion IA (fusion-ia-api)<br/>localhost:8000]:::service
+  gym["Gym Leader (Pokedex)\ngym-leader\nlocalhost:8081"]:::service
+  type["TypeMatch (Comparator)\ntypematch\nlocalhost:8082"]:::service
+  fusion["Fusion IA API\nfusion-ia-api\nlocalhost:8000"]:::service
 
-  pg[(Postgres<br/>porygonz-postgres<br/>localhost:5432)]:::data
-  rd[(Redis<br/>porygonz-redis<br/>localhost:6379)]:::data
+  pg[("Postgres\nporygonz-postgres\nlocalhost:5432")]:::data
+  rd[("Redis\nporygonz-redis\nlocalhost:6379")]:::data
 
   %% ========= FLOWS =========
-  client -->|HTTP /api/v1/*| gw
+  client -->|"HTTP /api/v1/*"| gw
 
-  gw -->|/api/v1/pokemon/*| gym
-  gw -->|/api/v1/compare/*| type
-  gw -->|/api/v1/fusions/*| fusion
+  gw -->|"/api/v1/pokemon/*"| gym
+  gw -->|"/api/v1/compare/*"| type
+  gw -->|"/api/v1/fusions/*"| fusion
 
-  type -->|POKEDEX_BASE_URL<br/>http://gym-leader:8081/api/v1/pokemon| gym
+  type -->|"POKEDEX_BASE_URL\nhttp://gym-leader:8081/api/v1/pokemon"| gym
 
-  gym ---|JDBC| pg
-  gym ---|Cache| rd
+  gym ---|"JDBC"| pg
+  gym ---|"Cache"| rd
 
-  fusion -. (futuro: persistência) .-> pg
+  fusion -. "futuro: persistência" .-> pg
 ```
